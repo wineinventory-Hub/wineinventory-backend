@@ -34,15 +34,10 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         }
 
         if (command.password() != null) {
+            if (!command.password().equals(command.validationPassword())) {
+                throw new IllegalArgumentException("Password and validation password do not match");
+            }
             user.setPassword(hashingService.encode(command.password()));
-        }
-
-        if (command.validationPassword() != null) {
-            user.setValidationPassword(hashingService.encode(command.validationPassword()));
-        }
-
-        if (command.role() != null) {
-            user.setRole(command.role());
         }
 
         return userRepository.save(user);

@@ -1,21 +1,20 @@
 package com.wineinventory.profilemanagement.interfaces.rest.assembler;
 
 import com.wineinventory.profilemanagement.domain.model.commands.UpdateProfileCommand;
-import com.wineinventory.profilemanagement.interfaces.rest.resources.ProfileResource;
+import com.wineinventory.profilemanagement.interfaces.rest.resources.UpdateProfileResource;
 
-public class ProfieFromResourceAssembler {
+public class UpdateProfileCommandFromResourceAssembler {
 
-    private ProfieFromResourceAssembler() {
+    private UpdateProfileCommandFromResourceAssembler() {
     }
 
-    public static UpdateProfileCommand toCommand(String currentUsername, ProfileResource resource) {
+    public static UpdateProfileCommand toCommand(String currentUsername, UpdateProfileResource resource) {
         return new UpdateProfileCommand(
                 currentUsername,
                 resource.username(),
                 resource.email(),
                 resource.password(),
-                resource.validationPassword(),
-                resource.role()
+                resource.validationPassword()
         );
     }
 }

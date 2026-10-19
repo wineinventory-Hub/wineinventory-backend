@@ -2,6 +2,8 @@ package com.wineinventory.authorization.application.internal.commandservices;
 
 import com.wineinventory.authorization.application.internal.outboundservices.hashing.HashingService;
 import com.wineinventory.authorization.application.internal.outboundservices.tokens.TokenService;
+import com.wineinventory.authorization.domain.exceptions.InvalidCredentialsException;
+import com.wineinventory.authorization.domain.exceptions.UsernameAlreadyExistsException;
 import com.wineinventory.authorization.domain.model.aggregates.User;
 import com.wineinventory.authorization.domain.model.commands.SignInCommand;
 import com.wineinventory.authorization.domain.model.commands.SignUpCommand;
@@ -28,10 +30,8 @@ public class UserCommandServiceImpl implements UserCommandService {
     @Override
     public Optional<ImmutableTriple<User, String, Long>> handle(SignInCommand command) {
         var user = userRepository.findByUsername(command.username());
-        if (user.isEmpty())
-            throw new RuntimeException("User not found");
-        if (!hashingService.matches(command.password(), user.get().getPassword()))
-            throw new RuntimeException("Invalid password");
+        if (user.isEmpty() || !hashingService.matches(command.password(), user.get().getPassword()))
+            throw new InvalidCredentialsException();
 
         var token = tokenService.generateToken(user.get().getUsername());
 
@@ -41,12 +41,13 @@ public class UserCommandServiceImpl implements UserCommandService {
     @Override
     public Optional<User> handle(SignUpCommand command) {
         if (userRepository.existsByUsername(command.username()))
-            throw new RuntimeException("Username already exists");
+            throw new UsernameAlreadyExistsException(command.username());
+        if (!command.password().equals(command.validationPassword()))
+            throw new IllegalArgumentException("Password and validation password do not match");
         var user = new User(
                 command.username(),
                 command.email(),
                 hashingService.encode(command.password()),
-                hashingService.encode(command.validationPassword()),
                 command.role()
         );
         userRepository.save(user);

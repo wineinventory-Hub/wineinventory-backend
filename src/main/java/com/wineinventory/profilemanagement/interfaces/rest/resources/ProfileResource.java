@@ -3,11 +3,12 @@ package com.wineinventory.profilemanagement.interfaces.rest.resources;
 import com.wineinventory.authorization.domain.model.aggregates.User;
 import com.wineinventory.authorization.domain.model.valueobjects.UserRoles;
 
+/**
+ * Profile resource returned by the API. It never includes the password.
+ */
 public record ProfileResource(
         String username,
         String email,
-        String password,
-        String validationPassword,
         UserRoles role
 ) {
 
@@ -15,8 +16,6 @@ public record ProfileResource(
         return new ProfileResource(
                 user.getUsername(),
                 user.getEmail(),
-                user.getPassword(),
-                user.getValidationPassword(),
                 user.getRole()
         );
     }

@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
  *     This controller is responsible for handling authentication requests.
  *     It exposes two endpoints:
  *     <ul>
- *         <li>POST /api/v1/auth/sign-in</li>
- *         <li>POST /api/v1/auth/sign-up</li>
+ *         <li>POST /api/v1/sign-in</li>
+ *         <li>POST /api/v1/sign-up</li>
  *     </ul>
  * </p>
  */
@@ -52,7 +52,7 @@ public class AuthenticationController {
     @Operation(summary = "Sign-in", description = "Sign-in with the provided credentials.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User authenticated successfully."),
-            @ApiResponse(responseCode = "404", description = "User not found.")})
+            @ApiResponse(responseCode = "401", description = "Invalid username or password.")})
     public ResponseEntity<AuthenticatedUserResource> signIn(@RequestBody SignInResource signInResource) {
         var signInCommand = SignInCommandFromResourceAssembler.toCommandFromResource(signInResource);
         var authenticatedUser = userCommandService.handle(signInCommand);
@@ -72,7 +72,8 @@ public class AuthenticationController {
     @Operation(summary = "Sign-up", description = "Sign-up with the provided credentials.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User created successfully."),
-            @ApiResponse(responseCode = "404", description = "User not found.")})
+            @ApiResponse(responseCode = "400", description = "Invalid data or passwords do not match."),
+            @ApiResponse(responseCode = "409", description = "Username already exists.")})
     public ResponseEntity<UserResource> signUp(@RequestBody SignUpResource signUpResource) {
         var signUpCommand = SignUpCommandFromResourceAssembler.toCommandFromResource(signUpResource);
         var user = userCommandService.handle(signUpCommand);

@@ -2,8 +2,9 @@ package com.wineinventory.profilemanagement.interfaces.rest.controller;
 
 import com.wineinventory.profilemanagement.domain.services.ProfileCommandService;
 import com.wineinventory.profilemanagement.domain.services.ProfileQueryService;
-import com.wineinventory.profilemanagement.interfaces.rest.assembler.ProfieFromResourceAssembler;
+import com.wineinventory.profilemanagement.interfaces.rest.assembler.UpdateProfileCommandFromResourceAssembler;
 import com.wineinventory.profilemanagement.interfaces.rest.resources.ProfileResource;
+import com.wineinventory.profilemanagement.interfaces.rest.resources.UpdateProfileResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,8 +40,8 @@ public class ProfileController {
     }
 
     @PutMapping(consumes = APPLICATION_JSON_VALUE)
-    public ResponseEntity<ProfileResource> updateProfile(Authentication authentication, @RequestBody ProfileResource resource) {
-        var command = ProfieFromResourceAssembler.toCommand(authentication.getName(), resource);
+    public ResponseEntity<ProfileResource> updateProfile(Authentication authentication, @RequestBody UpdateProfileResource resource) {
+        var command = UpdateProfileCommandFromResourceAssembler.toCommand(authentication.getName(), resource);
         var updatedProfile = profileCommandService.handle(command);
         return ResponseEntity.ok(ProfileResource.from(updatedProfile));
     }
