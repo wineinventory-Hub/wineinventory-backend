@@ -96,7 +96,7 @@ public class WebSecurityConfiguration {
                 "/api/v1/**",
                 "/api/v1/accounts/**"
         );
-        http.cors(configurer -> configurer.configurationSource(_ -> {
+        http.cors(configurer -> configurer.configurationSource(request -> {
             var cors = new CorsConfiguration();
             cors.setAllowedOrigins(List.of("*"));
             cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
