@@ -1,6 +1,5 @@
 package com.wineinventory.reportingandcareguide.interfaces.rest.controllers;
 
-
 import com.wineinventory.inventorymanagement.application.internal.outboundservices.FileStorageService;
 import com.wineinventory.reportingandcareguide.domain.model.commands.CreateCareGuideCommand;
 import com.wineinventory.reportingandcareguide.domain.model.commands.CreateCareGuideWithoutProductCommand;
@@ -21,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.net.URI;
 import java.util.List;
@@ -51,6 +51,7 @@ public class AccountCareGuideController {
     )
     @ApiResponse(responseCode = "200", description = "Care Guide found")
     @ApiResponse(responseCode = "404", description = "Care Guide not found")
+    @PreAuthorize("@ownership.isAccountOwner(authentication, #accountId) and @ownership.canAccessCareGuide(authentication, #careGuideId)")
     public ResponseEntity<CareGuideResource> getCareGuideById(
             @Parameter(description = "Account ID") @PathVariable String accountId,
             @Parameter(description = "Care Guide ID") @PathVariable Long careGuideId) {
@@ -75,6 +76,7 @@ public class AccountCareGuideController {
     )
     @ApiResponse(responseCode = "200", description = "Care Guides found")
     @ApiResponse(responseCode = "404", description = "No Care Guides found for the given Account ID")
+    @PreAuthorize("@ownership.isAccountOwner(authentication, #accountId)")
     public ResponseEntity<List<CareGuideResource>> getAllCareGuidesByAccountId(
             @Parameter(description = "Account ID") @PathVariable String accountId) {
 
@@ -100,6 +102,7 @@ public class AccountCareGuideController {
     )
     @ApiResponse(responseCode = "201", description = "Care Guide created")
     @ApiResponse(responseCode = "400", description = "Invalid input")
+    @PreAuthorize("hasRole('PRODUCER') and @ownership.isAccountOwner(authentication, #accountId)")
     public ResponseEntity<CareGuideResource> createCareGuideWithoutProduct(
             @Parameter(description = "Account ID") @PathVariable String accountId,
             @Valid @RequestBody CreateCareGuideWithoutProductResource resource) {
@@ -138,6 +141,7 @@ public class AccountCareGuideController {
     )
     @ApiResponse(responseCode = "201", description = "Care Guide created and assigned")
     @ApiResponse(responseCode = "400", description = "Invalid input")
+    @PreAuthorize("hasRole('PRODUCER') and @ownership.isAccountOwner(authentication, #accountId) and @ownership.canAccessProduct(authentication, #productId)")
     public ResponseEntity<CareGuideResource> createCareGuide(
             @Parameter(description = "Account ID") @PathVariable String accountId,
             @Parameter(description = "Product ID") @PathVariable Long productId,

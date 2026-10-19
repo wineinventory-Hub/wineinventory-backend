@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * Controller for managing alerts associated with a specific account.
@@ -54,6 +55,7 @@ public class AccountAlertsController {
             @ApiResponse(responseCode = "404", description = "No alerts found for the specified account.")
     })
     @GetMapping
+    @PreAuthorize("@ownership.isAccountOwner(authentication, #accountId)")
     public ResponseEntity<?> getAlertsByAccountId(@PathVariable String accountId) {
         var targetAccountId = new AccountId(accountId);
         var getAllAlertsByAccountIdQuery = new GetAllAlertsByAccountIdQuery(targetAccountId);

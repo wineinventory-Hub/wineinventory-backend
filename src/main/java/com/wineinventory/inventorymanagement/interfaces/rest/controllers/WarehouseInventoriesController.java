@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -54,6 +55,7 @@ public class WarehouseInventoriesController {
             @ApiResponse(responseCode = "200", description = "Products retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Not Found - invalid warehouse ID")
     })
+    @PreAuthorize("@ownership.canAccessWarehouse(authentication, #warehouseId)")
     public ResponseEntity<List<ProductInventoryResource>> getAllProductsByWarehouseId(@PathVariable Long warehouseId) {
 
         var getAllProductsByWarehouseIdQuery = new GetAllProductsByWarehouseIdQuery(warehouseId);
@@ -80,6 +82,7 @@ public class WarehouseInventoriesController {
             @ApiResponse(responseCode = "200", description = "Inventory found successfully"),
             @ApiResponse(responseCode = "404", description = "Inventory not found - invalid product or warehouse ID")
     })
+    @PreAuthorize("@ownership.canAccessWarehouse(authentication, #warehouseId) and @ownership.canAccessProduct(authentication, #productId)")
     public ResponseEntity<InventoryResource> getInventoryByProductIdAndWarehouseIdAndBestBeforeDate(
             @PathVariable Long warehouseId,
             @PathVariable LocalDate expirationDate,
@@ -107,6 +110,7 @@ public class WarehouseInventoriesController {
             @ApiResponse(responseCode = "201", description = "Stock moved successfully!"),
             @ApiResponse(responseCode = "400", description = "Stock could not be moved - invalid product or warehouse ID or resource")
     })
+    @PreAuthorize("@ownership.canAccessWarehouse(authentication, #warehouseId) and @ownership.canAccessProduct(authentication, #productId) and @ownership.canAccessWarehouse(authentication, #resource.newWarehouseId())")
     public ResponseEntity<InventoryResource> moveProductsToAnotherWarehouse(
             @RequestBody MoveProductStockToAnotherWarehouseResource resource,
             @PathVariable Long productId,
@@ -134,6 +138,7 @@ public class WarehouseInventoriesController {
             @ApiResponse(responseCode = "201", description = "Stock added successfully!"),
             @ApiResponse(responseCode = "400", description = "Stock could not be moved - invalid product or warehouse ID or resource")
     })
+    @PreAuthorize("@ownership.canAccessWarehouse(authentication, #warehouseId) and @ownership.canAccessProduct(authentication, #productId)")
     public ResponseEntity<InventoryResource> addStockToProduct(
             @RequestBody AddStockToProductResource resource,
             @PathVariable Long productId,
@@ -161,6 +166,7 @@ public class WarehouseInventoriesController {
             @ApiResponse(responseCode = "201", description = "Stock subtracted successfully!"),
             @ApiResponse(responseCode = "400", description = "Stock could not be subtracted - invalid product or warehouse ID or resource")
     })
+    @PreAuthorize("@ownership.canAccessWarehouse(authentication, #warehouseId) and @ownership.canAccessProduct(authentication, #productId)")
     public ResponseEntity<InventoryResource> decreaseStockFromProduct(
             @RequestBody DecreaseStockFromProductResource resource,
             @PathVariable Long productId,
@@ -190,6 +196,7 @@ public class WarehouseInventoriesController {
             @ApiResponse(responseCode = "201", description = "Inventory created successfully"),
             @ApiResponse(responseCode = "400", description = "Bad request")
     })
+    @PreAuthorize("@ownership.canAccessWarehouse(authentication, #warehouseId) and @ownership.canAccessProduct(authentication, #productId)")
     public ResponseEntity<InventoryResource> addProductsToWarehouse(
             @RequestBody AddProductsToWarehouseResource resource,
             @PathVariable Long productId,
@@ -218,6 +225,7 @@ public class WarehouseInventoriesController {
             @ApiResponse(responseCode = "200", description = "Product deleted successfully"),
             @ApiResponse(responseCode = "400", description = "Bad request - product could not be deleted")
     })
+    @PreAuthorize("@ownership.canAccessWarehouse(authentication, #warehouseId) and @ownership.canAccessProduct(authentication, #productId)")
     public ResponseEntity<Map<String, String>> deleteProductFromWarehouse(@PathVariable Long warehouseId, @PathVariable Long productId, @RequestBody LocalDate bestBeforeDate) {
         var deleteProductCommand = new DeleteProductFromWarehouseCommand(productId, warehouseId, bestBeforeDate);
         Long deletedProductId = inventoryCommandService.handle(deleteProductCommand);

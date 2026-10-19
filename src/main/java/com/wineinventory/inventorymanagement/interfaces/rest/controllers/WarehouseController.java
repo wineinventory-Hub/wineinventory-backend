@@ -1,7 +1,6 @@
 package com.wineinventory.inventorymanagement.interfaces.rest.controllers;
 
 import com.wineinventory.inventorymanagement.domain.model.commands.DeleteWarehouseCommand;
-import com.wineinventory.inventorymanagement.domain.model.queries.GetAllWarehousesByIdQuery;
 import com.wineinventory.inventorymanagement.domain.model.queries.GetWarehouseByIdQuery;
 import com.wineinventory.inventorymanagement.domain.services.WarehouseCommandService;
 import com.wineinventory.inventorymanagement.domain.services.WarehouseQueryService;
@@ -9,6 +8,9 @@ import com.wineinventory.inventorymanagement.interfaces.rest.assemblers.UpdateWa
 import com.wineinventory.inventorymanagement.interfaces.rest.assemblers.WarehouseResourceFromEntityAssembler;
 import com.wineinventory.inventorymanagement.interfaces.rest.resources.UpdateWarehouseResource;
 import com.wineinventory.inventorymanagement.interfaces.rest.resources.WarehouseResource;
+import com.wineinventory.shared.infrastructure.security.ownership.ResourceOwnershipGuard;
+import com.wineinventory.inventorymanagement.domain.model.queries.GetAllWarehousesByAccountIdQuery;
+import com.wineinventory.inventorymanagement.domain.model.valueobjects.AccountId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -16,6 +18,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Map;
@@ -63,6 +67,7 @@ public class WarehouseController {
             @ApiResponse(responseCode = "400", description = "Warehouse could not be updated - invalid warehouse ID or resource")
     })
     @PutMapping(path = "/{warehouseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("@ownership.canAccessWarehouse(authentication, #warehouseId)")
     public ResponseEntity<WarehouseResource> updateWarehouse(@PathVariable Long warehouseId, @ModelAttribute UpdateWarehouseResource updateWarehouseResource) {
         var updateWarehouseCommand = UpdateWarehouseCommandFromResourceAssembler.toCommandFromResource(warehouseId, updateWarehouseResource);
         var updatedWarehouse = warehouseCommandService.handle(updateWarehouseCommand);
@@ -87,6 +92,7 @@ public class WarehouseController {
             @ApiResponse(responseCode = "404", description = "Warehouse not found - invalid warehouse ID")
     })
     @GetMapping("/{warehouseId}")
+    @PreAuthorize("@ownership.canAccessWarehouse(authentication, #warehouseId)")
     public ResponseEntity<WarehouseResource> getWarehouseById(@PathVariable Long warehouseId) {
 
         var getWarehouseById = new GetWarehouseByIdQuery(warehouseId);
@@ -105,16 +111,17 @@ public class WarehouseController {
      * @since 1.0.0
      */
     @Operation(summary = "Get all warehouses by account ID",
-            description = "Retrieves all warehouses associated with a specific profile ID.")
+            description = "Retrieves all warehouses of the authenticated account.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Warehouses retrieved successfully"),
             @ApiResponse(responseCode = "400", description = "Bad request - invalid profile ID")
     })
     @GetMapping
-    public ResponseEntity<List<WarehouseResource>> getAllWarehouses()
+    public ResponseEntity<List<WarehouseResource>> getAllWarehouses(Authentication authentication)
     {
-        var getAllWarehousesByIdQuery = new GetAllWarehousesByIdQuery();
-        var warehouses = warehouseQueryService.handle(getAllWarehousesByIdQuery);
+        var accountId = ResourceOwnershipGuard.currentAccountId(authentication).orElseThrow();
+        var getAllWarehousesByAccountIdQuery = new GetAllWarehousesByAccountIdQuery(new AccountId(accountId));
+        var warehouses = warehouseQueryService.handle(getAllWarehousesByAccountIdQuery);
         var warehouseResources = warehouses.stream().map(WarehouseResourceFromEntityAssembler::toResourceFromEntity).toList();
         return ResponseEntity.ok(warehouseResources);
     }
@@ -132,6 +139,7 @@ public class WarehouseController {
             @ApiResponse(responseCode = "400", description = "Bad request - invalid warehouse ID")
     })
     @DeleteMapping("/{warehouseId}")
+    @PreAuthorize("@ownership.canAccessWarehouse(authentication, #warehouseId)")
     public ResponseEntity<Map<String, String>> deleteWarehouse(@PathVariable Long warehouseId) {
         var deleteWarehouseCommand = new DeleteWarehouseCommand(warehouseId);
         warehouseCommandService.handle(deleteWarehouseCommand);

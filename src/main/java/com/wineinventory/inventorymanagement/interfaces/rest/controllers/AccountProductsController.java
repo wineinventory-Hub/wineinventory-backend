@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +50,7 @@ public class AccountProductsController {
             @ApiResponse(responseCode = "201", description = "Product created successfully"),
             @ApiResponse(responseCode = "400", description = "Bad request")
     })
+    @PreAuthorize("@ownership.isAccountOwner(authentication, #accountId)")
     public ResponseEntity<ProductResource> createProduct(@ModelAttribute CreateProductResource resource,
                                                          @PathVariable Long accountId) {
         Optional<Product> product = productCommandService.handle(CreateProductCommandFromResourceAssembler.toCommandFromResource(resource, accountId));
@@ -65,6 +67,7 @@ public class AccountProductsController {
             @ApiResponse(responseCode = "200", description = "Products retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Not found - invalid account ID")
     })
+    @PreAuthorize("@ownership.isAccountOwner(authentication, #accountId)")
     public ResponseEntity<List<ProductResource>> getAllProductsByAccountId(@PathVariable Long accountId) {
 
         var getAllProductsByAccountIdQuery = new GetAllProductsByAccountIdQuery(accountId);

@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.Map;
 
@@ -44,6 +45,7 @@ public class ProductsController {
             @ApiResponse(responseCode = "200", description = "Product found successfully"),
             @ApiResponse(responseCode = "404", description = "Product not found - invalid product ID")
     })
+    @PreAuthorize("@ownership.canAccessProduct(authentication, #productId)")
     public ResponseEntity<ProductResource> getProductById(@PathVariable Long productId) {
 
         var getProductByIdQuery = new GetProductByIdQuery(productId);
@@ -61,6 +63,7 @@ public class ProductsController {
             @ApiResponse(responseCode = "200", description = "Product updated successfully"),
             @ApiResponse(responseCode = "400", description = "Product could not be updated - invalid product ID or resource")
     })
+    @PreAuthorize("@ownership.canAccessProduct(authentication, #productId)")
     public ResponseEntity<ProductResource> updateProduct(@ModelAttribute UpdateProductResource resource, @PathVariable Long productId) {
         var updateProductCommand = UpdateProductCommandFromResourceAssembler.toCommandFromResource(resource, productId);
         var updatedProduct = productCommandService.handle(updateProductCommand);
@@ -77,6 +80,7 @@ public class ProductsController {
             @ApiResponse(responseCode = "200", description = "Product deleted successfully"),
             @ApiResponse(responseCode = "400", description = "Product could not be deleted - invalid product ID")
     })
+    @PreAuthorize("@ownership.canAccessProduct(authentication, #productId)")
     public ResponseEntity<Map<String, String>> deleteProduct(@PathVariable Long productId) {
         var deleteProductCommand = new DeleteProductCommand(productId);
         productCommandService.handle(deleteProductCommand);

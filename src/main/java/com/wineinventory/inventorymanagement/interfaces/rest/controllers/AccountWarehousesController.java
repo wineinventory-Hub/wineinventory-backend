@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,6 +61,7 @@ public class AccountWarehousesController {
             @ApiResponse(responseCode = "400", description = "Bad request")
     })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("@ownership.isAccountOwner(authentication, #accountId)")
     public ResponseEntity<WarehouseResource> createWarehouse(@ModelAttribute CreateWarehouseResource resource, @PathVariable Long accountId) {
         Optional<Warehouse> warehouse = warehouseCommandService.handle(CreateWarehouseCommandFromResourceAssembler.toCommandFromResource(resource, accountId));
 
@@ -75,6 +77,7 @@ public class AccountWarehousesController {
             @ApiResponse(responseCode = "200", description = "Warehouses retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Not found - invalid account ID")
     })
+    @PreAuthorize("@ownership.isAccountOwner(authentication, #accountId)")
     public ResponseEntity<List<WarehouseResource>> getAllWarehousesByAccountId(@PathVariable Long accountId) {
 
         var targetAccountId = new AccountId(accountId);

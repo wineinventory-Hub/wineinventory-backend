@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 
 /**
@@ -56,6 +57,7 @@ public class AlertsController {
             @ApiResponse(responseCode = "404", description = "Alert not found...")
     })
     @GetMapping("/{alertId}")
+    @PreAuthorize("@ownership.canAccessAlert(authentication, #alertId)")
     public ResponseEntity<AlertResource> getAlertById(@PathVariable String alertId) {
         var alert = alertQueryService.handle(new GetAlertByIdQuery(alertId));
         if (alert.isEmpty()) {

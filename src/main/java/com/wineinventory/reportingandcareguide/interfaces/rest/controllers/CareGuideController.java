@@ -14,6 +14,8 @@ import com.wineinventory.reportingandcareguide.domain.services.CareGuideQuerySer
 import com.wineinventory.reportingandcareguide.interfaces.rest.assemblers.CareGuideResourceFromEntityAssembler;
 import com.wineinventory.reportingandcareguide.interfaces.rest.resources.CareGuideResource;
 import com.wineinventory.reportingandcareguide.interfaces.rest.resources.UpdateCareGuideResource;
+import com.wineinventory.shared.infrastructure.security.ownership.ResourceOwnershipGuard;
+import com.wineinventory.reportingandcareguide.domain.model.queries.GetAllCareGuidesByAccountIdQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,6 +28,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -58,13 +62,14 @@ public class CareGuideController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all care guides", description = "Retrieves all care guides")
+    @Operation(summary = "Get all care guides", description = "Retrieves all care guides of the authenticated account")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Care guides retrieved successfully"),
             @ApiResponse(responseCode = "204", description = "No care guides available")
     })
-    public ResponseEntity<List<CareGuideResource>> getAllCareGuides() {
-        var careGuides = careGuideQueryService.getAllCareGuides();
+    public ResponseEntity<List<CareGuideResource>> getAllCareGuides(Authentication authentication) {
+        var accountId = ResourceOwnershipGuard.currentAccountId(authentication).orElseThrow();
+        var careGuides = careGuideQueryService.handle(new GetAllCareGuidesByAccountIdQuery(accountId.toString()));
 
         if (careGuides == null || careGuides.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -85,6 +90,7 @@ public class CareGuideController {
             @ApiResponse(responseCode = "404", description = "Care guide not found"),
             @ApiResponse(responseCode = "500", description = "Error processing the request")
     })
+    @PreAuthorize("hasRole('PRODUCER') and @ownership.isAccountOwner(authentication, #accountId) and @ownership.canAccessProduct(authentication, #productId)")
     public ResponseEntity<CareGuideResource> addCareGuide(
             @PathVariable Long careGuideId,
             @RequestParam("guideName") String guideName,
@@ -174,6 +180,7 @@ public class CareGuideController {
             @ApiResponse(responseCode = "404", description = "Care Guide not found")
     })
     @GetMapping("/{careGuideId}")
+    @PreAuthorize("@ownership.canAccessCareGuide(authentication, #careGuideId)")
     public ResponseEntity<CareGuideResource> getCareGuideById(
             @Parameter(description = "ID of the care guide to be obtained")
             @PathVariable Long careGuideId) {
@@ -195,6 +202,7 @@ public class CareGuideController {
             @ApiResponse(responseCode = "400", description = "Invalid input")
     })
     @PutMapping("/{careGuideId}")
+    @PreAuthorize("hasRole('PRODUCER') and @ownership.canAccessCareGuide(authentication, #careGuideId)")
     public ResponseEntity<CareGuideResource> updateCareGuide(
             @Parameter(description = "ID of the care guide to be updated")
             @PathVariable Long careGuideId,
@@ -224,6 +232,7 @@ public class CareGuideController {
             @ApiResponse(responseCode = "404", description = "Care Guide not found")
     })
     @DeleteMapping("/{careGuideId}")
+    @PreAuthorize("hasRole('PRODUCER') and @ownership.canAccessCareGuide(authentication, #careGuideId)")
     public ResponseEntity<Void> deleteCareGuide(
             @Parameter(description = "ID of the care guide to be deleted")
             @PathVariable Long careGuideId) {
@@ -243,6 +252,7 @@ public class CareGuideController {
             @ApiResponse(responseCode = "400", description = "Invalid operation")
     })
     @PutMapping("/{careGuideId}/deallocations")
+    @PreAuthorize("hasRole('PRODUCER') and @ownership.canAccessCareGuide(authentication, #careGuideId)")
     public ResponseEntity<Map<String, String>> deallocateCareGuide(
             @Parameter(description = "ID of the care guide to be unassigned")
             @PathVariable Long careGuideId) {
@@ -260,6 +270,7 @@ public class CareGuideController {
             @ApiResponse(responseCode = "400", description = "Invalid input")
     })
     @PutMapping("/{careGuideId}/allocations/{productId}")
+    @PreAuthorize("hasRole('PRODUCER') and @ownership.canAccessCareGuide(authentication, #careGuideId) and @ownership.canAccessProduct(authentication, #productId)")
     public ResponseEntity<Map<String, String>> allocateCareGuideToProduct(
             @Parameter(description = "ID of the care guide to be assigned")
             @PathVariable Long careGuideId,
