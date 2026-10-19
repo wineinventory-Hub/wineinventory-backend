@@ -4,6 +4,7 @@ import com.wineinventory.authorization.infrastructure.Authorization.sfs.pipeline
 import com.wineinventory.authorization.infrastructure.hashing.bcrypt.BCryptHashingService;
 import com.wineinventory.authorization.infrastructure.tokens.jwt.BearerTokenService;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -40,6 +41,8 @@ public class WebSecurityConfiguration {
     private final BCryptHashingService hashingService;
 
     private final AuthenticationEntryPoint unauthorizedRequestHandler;
+
+    private final List<String> allowedOrigins;
 
     /**
      * This method creates the Bearer Authorization Request Filter.
@@ -98,7 +101,7 @@ public class WebSecurityConfiguration {
         );
         http.cors(configurer -> configurer.configurationSource(request -> {
             var cors = new CorsConfiguration();
-            cors.setAllowedOrigins(List.of("*"));
+            cors.setAllowedOrigins(allowedOrigins);
             cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
             cors.setAllowedHeaders(List.of("*"));
             return cors;
@@ -137,8 +140,11 @@ public class WebSecurityConfiguration {
      * @param tokenService The token service
      * @param hashingService The hashing service
      * @param authenticationEntryPoint The authentication entry point
+     * @param allowedOrigins The origins allowed by CORS, from the cors.allowed-origins property
      */
-    public WebSecurityConfiguration(@Qualifier("defaultUserDetailsService") UserDetailsService userDetailsService, BearerTokenService tokenService, BCryptHashingService hashingService, AuthenticationEntryPoint authenticationEntryPoint) {
+    public WebSecurityConfiguration(@Qualifier("defaultUserDetailsService") UserDetailsService userDetailsService, BearerTokenService tokenService, BCryptHashingService hashingService, AuthenticationEntryPoint authenticationEntryPoint,
+                                    @Value("${cors.allowed-origins}") List<String> allowedOrigins) {
+        this.allowedOrigins = allowedOrigins;
         this.userDetailsService = userDetailsService;
         this.tokenService = tokenService;
         this.hashingService = hashingService;

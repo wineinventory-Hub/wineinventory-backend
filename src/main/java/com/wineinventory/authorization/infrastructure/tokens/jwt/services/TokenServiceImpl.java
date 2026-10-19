@@ -4,6 +4,7 @@ import com.wineinventory.authorization.infrastructure.tokens.jwt.BearerTokenServ
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
@@ -34,6 +35,19 @@ public class TokenServiceImpl implements BearerTokenService {
 
     @Value("${authorization.jwt.expiration.days}")
     private int expirationDays;
+
+    private static final int MINIMUM_SECRET_LENGTH = 32;
+
+    /**
+     * Fails fast at startup when the JWT secret is missing or too short for HMAC-SHA256.
+     */
+    @PostConstruct
+    void validateSecret() {
+        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < MINIMUM_SECRET_LENGTH) {
+            throw new IllegalStateException("The JWT_SECRET environment variable must have at least "
+                    + MINIMUM_SECRET_LENGTH + " characters");
+        }
+    }
 
     /**
      * This method generates a JWT token from an authentication object
