@@ -119,6 +119,8 @@ public class WebSecurityConfiguration {
                                 "/swagger-ui/**",
                                 "/swagger-resources/**",
                                 "/webjars/**",
+                                "/actuator/health",
+                                "/actuator/health/**",
                                 "/api/v1/accounts/by-email",
                                 "/api/v1/subscriptions/paypal/return",
                                 "/api/v1/subscriptions/paypal/cancel",
