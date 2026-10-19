@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -51,6 +52,7 @@ public class AccountSubscriptionsController {
     @PostMapping
     @Operation(summary = "Create a new subscription for an account", 
                description = "Initializes a new subscription for the specified account.")
+    @PreAuthorize("@ownership.isAccountOwner(authentication, #accountId)")
     public ResponseEntity<SubscriptionAssembler> createSubscription(
             @Parameter(description = "Account ID", required = true) @PathVariable String accountId,
             @RequestBody CreateSubscriptionAssembler request,
@@ -155,6 +157,7 @@ public class AccountSubscriptionsController {
     @PutMapping("/{subscriptionId}")
     @Operation(summary = "Upgrade an existing subscription for an account", 
                description = "Upgrades an existing subscription for the specified account.")
+    @PreAuthorize("@ownership.isAccountOwner(authentication, #accountId)")
     public ResponseEntity<SubscriptionAssembler> upgradeSubscription(
             @Parameter(description = "Account ID", required = true) @PathVariable String accountId,
             @Parameter(description = "Subscription ID", required = true) @PathVariable String subscriptionId,
@@ -202,6 +205,7 @@ public class AccountSubscriptionsController {
     @GetMapping
     @Operation(summary = "Get subscription by account id", 
                description = "Retrieves a subscription for the specified account.")
+    @PreAuthorize("@ownership.isAccountOwner(authentication, #accountId)")
     public ResponseEntity<SubscriptionAssembler> getSubscriptionByAccountId(
             @Parameter(description = "Account ID", required = true) @PathVariable String accountId) {
         try {
